@@ -61,4 +61,3 @@ Now that your `README.md` is complete, save the file and commit it to your repos
     git push origin main
     ```
 
-When you look at your GitHub repository page, this `README.md` will be the first thing anyone sees, making a strong first impression!
