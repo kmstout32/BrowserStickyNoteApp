@@ -5,12 +5,18 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "mocha tests/selenium/**/*.test.js --timeout 10000",
+    "test:watch": "mocha tests/selenium/**/*.test.js --timeout 10000 --watch"
   },
   "keywords": ["todo", "express", "node"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "selenium-webdriver": "^4.15.0"
   }
 }
