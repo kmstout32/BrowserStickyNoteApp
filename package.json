@@ -1,0 +1,16 @@
+{
+  "name": "sticky-note-app",
+  "version": "1.0.0",
+  "description": "A simple to-do list application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["todo", "express", "node"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
