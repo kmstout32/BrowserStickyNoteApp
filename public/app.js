@@ -8,9 +8,13 @@ const todoList = document.getElementById('todoList');
 // Load todos from localStorage
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
 let timerInterval = null;
+let currentFilter = 'all'; // all, today, upcoming
 
 // Initialize the app
 function init() {
+  // Load and apply saved theme
+  loadTheme();
+
   // Initialize order and priority for existing todos without it
   let needsSave = false;
   todos.forEach((todo, index) => {
@@ -37,6 +41,49 @@ function init() {
       addTodo();
     }
   });
+
+  // Tab navigation listeners
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Update active tab
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update filter and re-render
+      currentFilter = btn.getAttribute('data-filter');
+      renderTodos();
+    });
+  });
+
+  // Theme toggle listener
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+}
+
+// Theme Management
+function loadTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+  const themeIcon = document.querySelector('.theme-icon');
+  if (themeIcon) {
+    themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+  }
 }
 
 // Start continuous timer updates
@@ -47,13 +94,156 @@ function startTimerUpdates() {
   }, 1000); // Update every second
 }
 
+// Natural Language Date Parser
+function parseNaturalLanguageDate(text) {
+  const lowerText = text.toLowerCase();
+  let detectedDate = null;
+  let detectedTime = null;
+  let cleanedText = text;
+
+  // Time patterns
+  const timePatterns = [
+    { pattern: /\bat\s+(\d{1,2}):(\d{2})\s*(am|pm)\b/i, handler: (match) => {
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      if (match[3].toLowerCase() === 'pm' && hours !== 12) hours += 12;
+      if (match[3].toLowerCase() === 'am' && hours === 12) hours = 0;
+      return { hours, minutes };
+    }},
+    { pattern: /\bat\s+(\d{1,2})\s*(am|pm)\b/i, handler: (match) => {
+      let hours = parseInt(match[1]);
+      if (match[2].toLowerCase() === 'pm' && hours !== 12) hours += 12;
+      if (match[2].toLowerCase() === 'am' && hours === 12) hours = 0;
+      return { hours, minutes: 0 };
+    }},
+    { pattern: /\b(\d{1,2}):(\d{2})\s*(am|pm)\b/i, handler: (match) => {
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      if (match[3].toLowerCase() === 'pm' && hours !== 12) hours += 12;
+      if (match[3].toLowerCase() === 'am' && hours === 12) hours = 0;
+      return { hours, minutes };
+    }},
+    { pattern: /\b(\d{1,2})\s*(am|pm)\b/i, handler: (match) => {
+      let hours = parseInt(match[1]);
+      if (match[2].toLowerCase() === 'pm' && hours !== 12) hours += 12;
+      if (match[2].toLowerCase() === 'am' && hours === 12) hours = 0;
+      return { hours, minutes: 0 };
+    }},
+    { pattern: /\bat\s+noon\b/i, handler: () => ({ hours: 12, minutes: 0 }) },
+    { pattern: /\bat\s+midnight\b/i, handler: () => ({ hours: 0, minutes: 0 }) },
+    { pattern: /\bmorning\b/i, handler: () => ({ hours: 8, minutes: 0 }) },
+    { pattern: /\bafternoon\b/i, handler: () => ({ hours: 14, minutes: 0 }) },
+    { pattern: /\bevening\b/i, handler: () => ({ hours: 18, minutes: 0 }) },
+    { pattern: /\bnight\b/i, handler: () => ({ hours: 21, minutes: 0 }) }
+  ];
+
+  // Date patterns
+  const now = new Date();
+
+  // Check for relative dates
+  if (/\btoday\b/i.test(lowerText)) {
+    detectedDate = new Date(now);
+    cleanedText = cleanedText.replace(/\btoday\b/gi, '').trim();
+  } else if (/\btomorrow\b/i.test(lowerText)) {
+    detectedDate = new Date(now);
+    detectedDate.setDate(detectedDate.getDate() + 1);
+    cleanedText = cleanedText.replace(/\btomorrow\b/gi, '').trim();
+  } else if (/\btonight\b/i.test(lowerText)) {
+    detectedDate = new Date(now);
+    detectedTime = { hours: 21, minutes: 0 };
+    cleanedText = cleanedText.replace(/\btonight\b/gi, '').trim();
+  } else {
+    // Check for day names
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    for (let i = 0; i < days.length; i++) {
+      const regex = new RegExp(`\\b${days[i]}\\b`, 'i');
+      if (regex.test(lowerText)) {
+        detectedDate = new Date(now);
+        const currentDay = detectedDate.getDay();
+        const targetDay = i;
+        let daysToAdd = targetDay - currentDay;
+        if (daysToAdd <= 0) daysToAdd += 7; // Next occurrence
+        detectedDate.setDate(detectedDate.getDate() + daysToAdd);
+        cleanedText = cleanedText.replace(regex, '').trim();
+        break;
+      }
+    }
+
+    // Check for "next week"
+    if (/\bnext\s+week\b/i.test(lowerText)) {
+      detectedDate = new Date(now);
+      detectedDate.setDate(detectedDate.getDate() + 7);
+      cleanedText = cleanedText.replace(/\bnext\s+week\b/gi, '').trim();
+    }
+
+    // Check for "in X days/hours"
+    const inDaysMatch = lowerText.match(/\bin\s+(\d+)\s+days?\b/i);
+    if (inDaysMatch) {
+      detectedDate = new Date(now);
+      detectedDate.setDate(detectedDate.getDate() + parseInt(inDaysMatch[1]));
+      cleanedText = cleanedText.replace(/\bin\s+\d+\s+days?\b/gi, '').trim();
+    }
+
+    const inHoursMatch = lowerText.match(/\bin\s+(\d+)\s+hours?\b/i);
+    if (inHoursMatch) {
+      detectedDate = new Date(now);
+      detectedDate.setHours(detectedDate.getHours() + parseInt(inHoursMatch[1]));
+      cleanedText = cleanedText.replace(/\bin\s+\d+\s+hours?\b/gi, '').trim();
+    }
+  }
+
+  // Extract time from text
+  for (const { pattern, handler } of timePatterns) {
+    const match = lowerText.match(pattern);
+    if (match && !detectedTime) {
+      detectedTime = handler(match);
+      cleanedText = cleanedText.replace(pattern, '').trim();
+      break;
+    }
+  }
+
+  // Combine date and time
+  if (detectedDate) {
+    if (detectedTime) {
+      detectedDate.setHours(detectedTime.hours, detectedTime.minutes, 0, 0);
+    } else {
+      // Default to 9am if no time specified
+      detectedDate.setHours(9, 0, 0, 0);
+    }
+
+    // Format for datetime-local input
+    const year = detectedDate.getFullYear();
+    const month = String(detectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(detectedDate.getDate()).padStart(2, '0');
+    const hours = String(detectedDate.getHours()).padStart(2, '0');
+    const minutes = String(detectedDate.getMinutes()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+    // Clean up extra whitespace
+    cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
+
+    return { date: formattedDate, cleanedText };
+  }
+
+  return null;
+}
+
 // Add a new todo
 function addTodo() {
-  const text = todoInput.value.trim();
+  let text = todoInput.value.trim();
 
   if (text === '') {
     alert('Please enter a task!');
     return;
+  }
+
+  // Parse natural language date from text
+  const parsedDate = parseNaturalLanguageDate(text);
+  let dueDate = dueDateInput.value || null;
+
+  if (parsedDate) {
+    text = parsedDate.cleanedText;
+    dueDate = parsedDate.date;
   }
 
   const todo = {
@@ -61,7 +251,7 @@ function addTodo() {
     text: text,
     completed: false,
     priority: priorityInput.value || 'medium',
-    dueDate: dueDateInput.value || null,
+    dueDate: dueDate,
     order: todos.length
   };
 
@@ -164,6 +354,44 @@ function saveTodos() {
 function isOverdue(dueDate) {
   if (!dueDate) return false;
   return new Date(dueDate) < new Date();
+}
+
+// Check if date is today
+function isToday(dueDate) {
+  if (!dueDate) return false;
+  const today = new Date();
+  const due = new Date(dueDate);
+  return due.getDate() === today.getDate() &&
+         due.getMonth() === today.getMonth() &&
+         due.getFullYear() === today.getFullYear();
+}
+
+// Check if date is in the next 7 days
+function isUpcoming(dueDate) {
+  if (!dueDate) return false;
+  const now = new Date();
+  const due = new Date(dueDate);
+  const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+
+  return due > now && due <= sevenDaysFromNow;
+}
+
+// Filter todos based on current view
+function filterTodos(todos) {
+  if (currentFilter === 'all') {
+    return todos;
+  } else if (currentFilter === 'today') {
+    // Show today's tasks and overdue tasks
+    return todos.filter(todo =>
+      !todo.completed && (isToday(todo.dueDate) || isOverdue(todo.dueDate))
+    );
+  } else if (currentFilter === 'upcoming') {
+    // Show tasks due in the next 7 days (not including today)
+    return todos.filter(todo =>
+      !todo.completed && isUpcoming(todo.dueDate) && !isToday(todo.dueDate)
+    );
+  }
+  return todos;
 }
 
 // Format due date for display
@@ -326,8 +554,11 @@ function handleDrop(e) {
 function renderTodos() {
   todoList.innerHTML = '';
 
+  // Apply current filter
+  let filteredTodos = filterTodos(todos);
+
   // Sort todos by order
-  const sortedTodos = [...todos].sort((a, b) => {
+  const sortedTodos = [...filteredTodos].sort((a, b) => {
     const orderA = a.order !== undefined ? a.order : 999999;
     const orderB = b.order !== undefined ? b.order : 999999;
     return orderA - orderB;

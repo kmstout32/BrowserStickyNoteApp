@@ -30,12 +30,26 @@ Building this project with an AI agent was a major achievement. The primary take
 
 * **Persistence:** All notes are automatically saved and loaded from the browser's local storage.
 * **Full CRUD Support:** Users can **Create**, **Read**, **Update** (Edit by clicking the task text), and **Delete** tasks.
-* **Time-Aware Warnings:** Tasks automatically show a visual warning (blinking text, red highlight) if they become overdue (currently set to a 5-minute timeout).
+* **Natural Language Date Parsing:** Type phrases like "tomorrow morning", "Friday at 3pm", "in 2 hours", or "next week" in your task, and the app automatically extracts and sets the due date.
+* **Priority Levels:** Assign High, Medium, or Low priority to tasks with color-coded visual indicators (flag icons and colored left borders).
+* **Drag-and-Drop Reordering:** Click and drag task cards to reorder them by importance.
+* **Tab Filtering:** View all tasks, or filter by "Today" (due today + overdue) or "Upcoming" (next 7 days).
+* **Dark Mode:** Toggle between light and forest green dark theme with persistent preference.
+* **Time-Aware Warnings:** Tasks automatically show a visual warning (blinking countdown, red highlight) when they become urgent (≤5 minutes remaining).
+* **Real-Time Countdowns:** Live countdown timers show exactly how much time remains until each task is due.
 * **Responsive Design:** Styled with CSS for readability on various devices.
 
 ## ✅ Automated Testing (End-to-End)
 
-This project includes automated tests built with **Selenium WebDriver** to validate core functionality (CRUD and persistence).
+This project includes **33 automated tests** built with **Selenium WebDriver** to validate core functionality including:
+* Basic CRUD operations
+* Todo completion and deletion
+* Due date and countdown timers
+* LocalStorage persistence
+* Priority levels
+* Edit functionality
+* Drag-and-drop reordering
+* Natural language date parsing
 
 ### How to Run Tests
 
@@ -57,6 +71,31 @@ Since this is a client-side application, you do not need a separate server to ru
     cd Sticky-Notes-App
     ```
 2.  **Launch in Browser:** Double-click the **`index.html`** file in your project root to open the application in any web browser.
+
+## 📖 Usage Examples
+
+### Natural Language Date Entry
+
+Simply type your task with date/time phrases, and the app automatically extracts the due date:
+
+* **"Pick up dry cleaning tomorrow morning"** → Task: "Pick up dry cleaning" | Due: Tomorrow at 8:00 AM
+* **"Team meeting Friday at 3pm"** → Task: "Team meeting" | Due: Next Friday at 3:00 PM
+* **"Call client in 2 hours"** → Task: "Call client" | Due: 2 hours from now
+* **"Review documents next week"** → Task: "Review documents" | Due: 7 days from now at 9:00 AM
+* **"Lunch meeting today at noon"** → Task: "Lunch meeting" | Due: Today at 12:00 PM
+
+### Supported Date/Time Phrases
+
+**Relative Dates:**
+* today, tomorrow, tonight
+* Day names (Monday, Tuesday, etc.)
+* next week
+* in X hours, in X days
+
+**Time Expressions:**
+* morning (8am), afternoon (2pm), evening (6pm), night (9pm)
+* at noon, at midnight
+* 3pm, 3:30pm, at 3pm, at 3:30pm
 
 ---
 ---

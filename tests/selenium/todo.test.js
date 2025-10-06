@@ -522,4 +522,109 @@ describe('Sticky Note To-Do App Tests', function() {
       assert.strictEqual(thirdText, 'Third Task');
     });
   });
+
+  describe('Natural Language Date Parsing', function() {
+    it('should parse "tomorrow morning" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Pick up dry cleaning tomorrow morning', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Check task text has date phrase removed
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Pick up dry cleaning');
+
+      // Check due date was set
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+    });
+
+    it('should parse "today afternoon" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Meeting today afternoon', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Meeting');
+
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+    });
+
+    it('should parse "Friday at 3pm" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Team meeting Friday at 3pm', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Team meeting');
+
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+    });
+
+    it('should parse "tonight" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Finish report tonight', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Finish report');
+
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+    });
+
+    it('should parse "in 2 hours" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Call client in 2 hours', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Call client');
+
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+
+      // Verify countdown is present
+      const countdown = await driver.findElement(By.className('countdown'));
+      assert.ok(countdown, 'Countdown should be displayed');
+    });
+
+    it('should parse "next week" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Review documents next week', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Review documents');
+
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+    });
+
+    it('should parse "at noon" and set due date', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Lunch meeting today at noon', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Lunch meeting');
+
+      const dueDate = await driver.findElement(By.className('due-date'));
+      assert.ok(dueDate, 'Due date should be displayed');
+    });
+
+    it('should handle tasks without natural language dates', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Regular task without date', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoText = await driver.findElement(By.className('todo-text')).getText();
+      assert.strictEqual(todoText, 'Regular task without date');
+
+      // Check that no due date is present
+      const dueDates = await driver.findElements(By.className('due-date'));
+      assert.strictEqual(dueDates.length, 0, 'No due date should be displayed');
+    });
+  });
 });
