@@ -290,4 +290,236 @@ describe('Sticky Note To-Do App Tests', function() {
       assert.ok(isChecked);
     });
   });
+
+  describe('Priority Features', function() {
+    it('should add todo with high priority', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      const prioritySelect = await driver.findElement(By.id('priorityInput'));
+
+      // Select high priority
+      await prioritySelect.sendKeys('High Priority');
+      await todoInput.sendKeys('High priority task', Key.RETURN);
+
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Check if priority badge is displayed
+      const priorityBadge = await driver.findElement(By.className('priority-badge'));
+      const badgeText = await priorityBadge.getText();
+      assert.ok(badgeText.includes('High'));
+
+      // Check if card has priority border
+      const todoItem = await driver.findElement(By.className('todo-item'));
+      const classes = await todoItem.getAttribute('class');
+      assert.ok(classes.includes('priority-high-card'));
+    });
+
+    it('should add todo with medium priority by default', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+
+      await todoInput.sendKeys('Medium priority task', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const priorityBadge = await driver.findElement(By.className('priority-badge'));
+      const badgeText = await priorityBadge.getText();
+      assert.ok(badgeText.includes('Medium'));
+    });
+
+    it('should add todo with low priority', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      const prioritySelect = await driver.findElement(By.id('priorityInput'));
+
+      // Select low priority
+      await prioritySelect.sendKeys('Low Priority');
+      await todoInput.sendKeys('Low priority task', Key.RETURN);
+
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const priorityBadge = await driver.findElement(By.className('priority-badge'));
+      const badgeText = await priorityBadge.getText();
+      assert.ok(badgeText.includes('Low'));
+    });
+
+    it('should persist priority after page refresh', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      const prioritySelect = await driver.findElement(By.id('priorityInput'));
+
+      await prioritySelect.sendKeys('High Priority');
+      await todoInput.sendKeys('Priority persist test', Key.RETURN);
+      await driver.sleep(500);
+
+      // Refresh page
+      await driver.navigate().refresh();
+      await driver.wait(until.elementLocated(By.id('todoInput')), 5000);
+
+      const priorityBadge = await driver.findElement(By.className('priority-badge'));
+      const badgeText = await priorityBadge.getText();
+      assert.ok(badgeText.includes('High'));
+    });
+  });
+
+  describe('Edit Functionality', function() {
+    it('should show edit button on each todo', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Editable task', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const editButton = await driver.findElement(By.className('edit-btn'));
+      const buttonText = await editButton.getText();
+      assert.strictEqual(buttonText, 'Edit');
+    });
+
+    it('should enter edit mode when edit button is clicked', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Task to edit', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const editButton = await driver.findElement(By.className('edit-btn'));
+      await editButton.click();
+      await driver.sleep(300);
+
+      // Check if edit mode is active
+      const editInput = await driver.findElement(By.className('edit-input'));
+      const saveButton = await driver.findElement(By.className('save-btn'));
+      const cancelButton = await driver.findElement(By.className('cancel-btn'));
+
+      assert.ok(editInput);
+      assert.ok(saveButton);
+      assert.ok(cancelButton);
+    });
+
+    it('should edit todo text and save', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Original text', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const editButton = await driver.findElement(By.className('edit-btn'));
+      await editButton.click();
+      await driver.sleep(300);
+
+      const editInput = await driver.findElement(By.className('edit-input'));
+      await editInput.clear();
+      await editInput.sendKeys('Updated text');
+
+      const saveButton = await driver.findElement(By.className('save-btn'));
+      await saveButton.click();
+      await driver.sleep(500);
+
+      const todoText = await driver.findElement(By.className('todo-text'));
+      const text = await todoText.getText();
+      assert.strictEqual(text, 'Updated text');
+    });
+
+    it('should cancel edit without saving changes', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Cancel edit test', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const editButton = await driver.findElement(By.className('edit-btn'));
+      await editButton.click();
+      await driver.sleep(300);
+
+      const editInput = await driver.findElement(By.className('edit-input'));
+      await editInput.clear();
+      await editInput.sendKeys('This should not save');
+
+      const cancelButton = await driver.findElement(By.className('cancel-btn'));
+      await cancelButton.click();
+      await driver.sleep(500);
+
+      const todoText = await driver.findElement(By.className('todo-text'));
+      const text = await todoText.getText();
+      assert.strictEqual(text, 'Cancel edit test');
+    });
+
+    it('should edit priority and save', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Change priority task', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const editButton = await driver.findElement(By.className('edit-btn'));
+      await editButton.click();
+      await driver.sleep(300);
+
+      const prioritySelect = await driver.findElement(By.className('edit-priority'));
+      await prioritySelect.sendKeys('High Priority');
+
+      const saveButton = await driver.findElement(By.className('save-btn'));
+      await saveButton.click();
+      await driver.sleep(500);
+
+      const priorityBadge = await driver.findElement(By.className('priority-badge'));
+      const badgeText = await priorityBadge.getText();
+      assert.ok(badgeText.includes('High'));
+    });
+
+    it('should not save empty todo text', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Non-empty task', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const editButton = await driver.findElement(By.className('edit-btn'));
+      await editButton.click();
+      await driver.sleep(300);
+
+      const editInput = await driver.findElement(By.className('edit-input'));
+      await editInput.clear();
+
+      const saveButton = await driver.findElement(By.className('save-btn'));
+      await saveButton.click();
+
+      // Wait for alert
+      await driver.wait(until.alertIsPresent(), 2000);
+      const alert = await driver.switchTo().alert();
+      const alertText = await alert.getText();
+      assert.strictEqual(alertText, 'Task cannot be empty!');
+      await alert.accept();
+    });
+  });
+
+  describe('Drag and Drop', function() {
+    it('should display drag handle on todo cards', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Draggable task', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const todoItem = await driver.findElement(By.className('todo-item'));
+      const isDraggable = await todoItem.getAttribute('draggable');
+      assert.strictEqual(isDraggable, 'true');
+    });
+
+    it('should maintain order after reordering tasks', async function() {
+      const todoInput = await driver.findElement(By.id('todoInput'));
+
+      // Add three tasks
+      await todoInput.sendKeys('First Task', Key.RETURN);
+      await driver.sleep(300);
+      await todoInput.sendKeys('Second Task', Key.RETURN);
+      await driver.sleep(300);
+      await todoInput.sendKeys('Third Task', Key.RETURN);
+      await driver.sleep(500);
+
+      // Verify initial order
+      let todoTexts = await driver.findElements(By.className('todo-text'));
+      let firstText = await todoTexts[0].getText();
+      let secondText = await todoTexts[1].getText();
+      let thirdText = await todoTexts[2].getText();
+
+      assert.strictEqual(firstText, 'First Task');
+      assert.strictEqual(secondText, 'Second Task');
+      assert.strictEqual(thirdText, 'Third Task');
+
+      // Refresh and check order persists
+      await driver.navigate().refresh();
+      await driver.wait(until.elementLocated(By.id('todoInput')), 5000);
+
+      todoTexts = await driver.findElements(By.className('todo-text'));
+      firstText = await todoTexts[0].getText();
+      secondText = await todoTexts[1].getText();
+      thirdText = await todoTexts[2].getText();
+
+      assert.strictEqual(firstText, 'First Task');
+      assert.strictEqual(secondText, 'Second Task');
+      assert.strictEqual(thirdText, 'Third Task');
+    });
+  });
 });

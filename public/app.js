@@ -1,5 +1,6 @@
 // Get elements
 const todoInput = document.getElementById('todoInput');
+const priorityInput = document.getElementById('priorityInput');
 const dueDateInput = document.getElementById('dueDateInput');
 const addBtn = document.getElementById('addBtn');
 const todoList = document.getElementById('todoList');
@@ -10,6 +11,22 @@ let timerInterval = null;
 
 // Initialize the app
 function init() {
+  // Initialize order and priority for existing todos without it
+  let needsSave = false;
+  todos.forEach((todo, index) => {
+    if (todo.order === undefined) {
+      todo.order = index;
+      needsSave = true;
+    }
+    if (todo.priority === undefined) {
+      todo.priority = 'medium';
+      needsSave = true;
+    }
+  });
+  if (needsSave) {
+    saveTodos();
+  }
+
   renderTodos();
   startTimerUpdates();
 
@@ -43,13 +60,16 @@ function addTodo() {
     id: Date.now(),
     text: text,
     completed: false,
-    dueDate: dueDateInput.value || null
+    priority: priorityInput.value || 'medium',
+    dueDate: dueDateInput.value || null,
+    order: todos.length
   };
 
   todos.push(todo);
   saveTodos();
   renderTodos();
   todoInput.value = '';
+  priorityInput.value = 'medium';
   dueDateInput.value = '';
   todoInput.focus();
 }
@@ -57,6 +77,10 @@ function addTodo() {
 // Delete a todo
 function deleteTodo(id) {
   todos = todos.filter(todo => todo.id !== id);
+  // Reorder remaining todos
+  todos.forEach((todo, index) => {
+    todo.order = index;
+  });
   saveTodos();
   renderTodos();
 }
@@ -69,6 +93,66 @@ function toggleTodo(id) {
     saveTodos();
     renderTodos();
   }
+}
+
+// Edit a todo
+function editTodo(id) {
+  const todo = todos.find(t => t.id === id);
+  if (!todo) return;
+
+  const todoElement = document.querySelector(`[data-id="${id}"]`);
+  if (!todoElement) return;
+
+  // Disable dragging while editing
+  todoElement.setAttribute('draggable', 'false');
+
+  const dueDateValue = todo.dueDate || '';
+
+  todoElement.innerHTML = `
+    <div class="edit-mode">
+      <input type="text" class="edit-input" value="${todo.text}" id="edit-text-${id}">
+      <select class="edit-priority" id="edit-priority-${id}">
+        <option value="low" ${todo.priority === 'low' ? 'selected' : ''}>Low Priority</option>
+        <option value="medium" ${todo.priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
+        <option value="high" ${todo.priority === 'high' ? 'selected' : ''}>High Priority</option>
+      </select>
+      <input type="datetime-local" class="edit-date" value="${dueDateValue}" id="edit-date-${id}">
+      <div class="edit-actions">
+        <button class="save-btn" onclick="saveEdit(${id})">Save</button>
+        <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  // Focus on the text input
+  document.getElementById(`edit-text-${id}`).focus();
+}
+
+// Save edited todo
+function saveEdit(id) {
+  const todo = todos.find(t => t.id === id);
+  if (!todo) return;
+
+  const newText = document.getElementById(`edit-text-${id}`).value.trim();
+  const newPriority = document.getElementById(`edit-priority-${id}`).value;
+  const newDueDate = document.getElementById(`edit-date-${id}`).value;
+
+  if (newText === '') {
+    alert('Task cannot be empty!');
+    return;
+  }
+
+  todo.text = newText;
+  todo.priority = newPriority;
+  todo.dueDate = newDueDate || null;
+
+  saveTodos();
+  renderTodos();
+}
+
+// Cancel editing
+function cancelEdit() {
+  renderTodos();
 }
 
 // Save todos to localStorage
@@ -173,13 +257,96 @@ function updateAllTimers() {
   });
 }
 
+// Drag and Drop functionality
+let draggedElement = null;
+let draggedTodoId = null;
+
+function handleDragStart(e) {
+  draggedElement = this;
+  draggedTodoId = parseInt(this.getAttribute('data-id'));
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+
+  // Remove drag-over class from all items
+  document.querySelectorAll('.todo-item').forEach(item => {
+    item.classList.remove('drag-over');
+  });
+}
+
+function handleDragOver(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  e.dataTransfer.dropEffect = 'move';
+  return false;
+}
+
+function handleDragEnter(e) {
+  if (this !== draggedElement) {
+    this.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  if (e.stopPropagation) {
+    e.stopPropagation();
+  }
+
+  if (draggedElement !== this) {
+    const dropTodoId = parseInt(this.getAttribute('data-id'));
+
+    // Find the dragged todo and the drop target todo
+    const draggedTodo = todos.find(t => t.id === draggedTodoId);
+    const dropTodo = todos.find(t => t.id === dropTodoId);
+
+    if (draggedTodo && dropTodo) {
+      // Swap order values
+      const tempOrder = draggedTodo.order;
+      draggedTodo.order = dropTodo.order;
+      dropTodo.order = tempOrder;
+
+      saveTodos();
+      renderTodos();
+    }
+  }
+
+  return false;
+}
+
 // Render todos to the DOM
 function renderTodos() {
   todoList.innerHTML = '';
 
-  todos.forEach(todo => {
+  // Sort todos by order
+  const sortedTodos = [...todos].sort((a, b) => {
+    const orderA = a.order !== undefined ? a.order : 999999;
+    const orderB = b.order !== undefined ? b.order : 999999;
+    return orderA - orderB;
+  });
+
+  sortedTodos.forEach((todo, index) => {
     const li = document.createElement('li');
-    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    const priorityClass = `priority-${todo.priority || 'medium'}-card`;
+    li.className = `todo-item ${todo.completed ? 'completed' : ''} ${priorityClass}`;
+    li.setAttribute('draggable', 'true');
+    li.setAttribute('data-id', todo.id);
+
+    const priority = todo.priority || 'medium';
+    const priorityLabels = {
+      high: 'High',
+      medium: 'Medium',
+      low: 'Low'
+    };
+    const priorityBadgeHtml = `<span class="priority-badge priority-${priority}">${priorityLabels[priority]}</span>`;
 
     const dueDateHtml = todo.dueDate ? `<div class="todo-due-date">${formatDueDate(todo.dueDate)}</div>` : '';
     const countdownHtml = todo.dueDate && !todo.completed ? `<div class="todo-countdown">${formatCountdown(todo.dueDate, todo.id)}</div>` : '';
@@ -187,12 +354,26 @@ function renderTodos() {
     li.innerHTML = `
       <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo(${todo.id})">
       <div class="todo-content">
-        <span class="todo-text">${todo.text}</span>
+        <div>
+          ${priorityBadgeHtml}
+          <span class="todo-text">${todo.text}</span>
+        </div>
         ${dueDateHtml}
         ${countdownHtml}
       </div>
-      <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+      <div class="todo-actions">
+        <button class="edit-btn" onclick="editTodo(${todo.id})">Edit</button>
+        <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+      </div>
     `;
+
+    // Add drag event listeners
+    li.addEventListener('dragstart', handleDragStart);
+    li.addEventListener('dragend', handleDragEnd);
+    li.addEventListener('dragover', handleDragOver);
+    li.addEventListener('drop', handleDrop);
+    li.addEventListener('dragenter', handleDragEnter);
+    li.addEventListener('dragleave', handleDragLeave);
 
     todoList.appendChild(li);
   });

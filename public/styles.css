@@ -51,6 +51,22 @@ h1 {
   border-color: #667eea;
 }
 
+#priorityInput {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+  background: white;
+}
+
+#priorityInput:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
 #dueDateInput {
   padding: 12px;
   border: 2px solid #e0e0e0;
@@ -89,14 +105,40 @@ h1 {
   display: flex;
   align-items: center;
   padding: 15px;
-  background: #f8f9fa;
-  border-radius: 5px;
-  margin-bottom: 10px;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 12px;
   transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  position: relative;
 }
 
 .todo-item:hover {
-  background: #e9ecef;
+  background: #f8f9fa;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.todo-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.todo-item.drag-over {
+  border-color: #667eea;
+  border-style: dashed;
+}
+
+.todo-item::before {
+  content: '⋮⋮';
+  position: absolute;
+  left: 8px;
+  color: #ccc;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: -2px;
 }
 
 .todo-item.completed .todo-text {
@@ -105,6 +147,7 @@ h1 {
 }
 
 .todo-checkbox {
+  margin-left: 25px;
   margin-right: 15px;
   width: 20px;
   height: 20px;
@@ -138,6 +181,27 @@ h1 {
   font-weight: 600;
 }
 
+.todo-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.edit-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.edit-btn:hover {
+  background: #5568d3;
+}
+
 .delete-btn {
   padding: 8px 16px;
   background: #dc3545;
@@ -151,6 +215,95 @@ h1 {
 
 .delete-btn:hover {
   background: #c82333;
+}
+
+/* Edit Mode Styles */
+.edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #667eea;
+  border-radius: 5px;
+  font-size: 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #5568d3;
+}
+
+.edit-priority {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+  background: white;
+}
+
+.edit-priority:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.edit-date {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.edit-date:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  padding: 10px 20px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.save-btn:hover {
+  background: #218838;
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
 }
 
 .todo-countdown {
@@ -186,4 +339,52 @@ h1 {
   50%, 100% {
     opacity: 0.3;
   }
+}
+
+/* Priority Indicators */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.priority-badge::before {
+  content: '🚩';
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+.priority-high {
+  background: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+.priority-medium {
+  background: #fff3e0;
+  color: #ef6c00;
+  border-left: 4px solid #ef6c00;
+}
+
+.priority-low {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #2e7d32;
+}
+
+/* Priority border colors for cards */
+.todo-item.priority-high-card {
+  border-left: 6px solid #c62828;
+}
+
+.todo-item.priority-medium-card {
+  border-left: 6px solid #ef6c00;
+}
+
+.todo-item.priority-low-card {
+  border-left: 6px solid #2e7d32;
 }
