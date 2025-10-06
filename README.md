@@ -31,8 +31,11 @@ Building this project with an AI agent was a major achievement. The primary take
 * **Persistence:** All notes are automatically saved and loaded from the browser's local storage.
 * **Full CRUD Support:** Users can **Create**, **Read**, **Update** (Edit by clicking the task text), and **Delete** tasks.
 * **Natural Language Date Parsing:** Type phrases like "tomorrow morning", "Friday at 3pm", "in 2 hours", or "next week" in your task, and the app automatically extracts and sets the due date.
+* **Calendar View:** Visualize all tasks on an interactive monthly calendar grid. Drag and drop tasks between days to reschedule them instantly.
+* **List & Calendar Toggle:** Seamlessly switch between traditional list view and calendar view with a single click.
+* **Month Navigation:** Navigate through months with previous/next buttons to view future tasks.
 * **Priority Levels:** Assign High, Medium, or Low priority to tasks with color-coded visual indicators (flag icons and colored left borders).
-* **Drag-and-Drop Reordering:** Click and drag task cards to reorder them by importance.
+* **Drag-and-Drop Reordering:** Click and drag task cards to reorder them by importance (List View) or reschedule them (Calendar View).
 * **Tab Filtering:** View all tasks, or filter by "Today" (due today + overdue) or "Upcoming" (next 7 days).
 * **Dark Mode:** Toggle between light and forest green dark theme with persistent preference.
 * **Time-Aware Warnings:** Tasks automatically show a visual warning (blinking countdown, red highlight) when they become urgent (≤5 minutes remaining).
@@ -41,7 +44,7 @@ Building this project with an AI agent was a major achievement. The primary take
 
 ## ✅ Automated Testing (End-to-End)
 
-This project includes **33 automated tests** built with **Selenium WebDriver** to validate core functionality including:
+This project includes **42 automated tests** built with **Selenium WebDriver** to validate core functionality including:
 * Basic CRUD operations
 * Todo completion and deletion
 * Due date and countdown timers
@@ -50,6 +53,8 @@ This project includes **33 automated tests** built with **Selenium WebDriver** t
 * Edit functionality
 * Drag-and-drop reordering
 * Natural language date parsing
+* Calendar view and navigation
+* View switching (List ↔ Calendar)
 
 ### How to Run Tests
 
@@ -96,6 +101,19 @@ Simply type your task with date/time phrases, and the app automatically extracts
 * morning (8am), afternoon (2pm), evening (6pm), night (9pm)
 * at noon, at midnight
 * 3pm, 3:30pm, at 3pm, at 3:30pm
+
+### Calendar View
+
+Switch to **Calendar View** to see all your tasks displayed on a monthly grid:
+
+* **View Toggle:** Click the "📅 Calendar View" button at the top to switch views
+* **Navigate Months:** Use ◀ and ▶ buttons to move between months
+* **Visual Overview:** Tasks appear on their due dates with color-coded priority indicators
+* **Drag to Reschedule:** Click and drag any task to a different day to update its due date
+  - The original time is preserved when moving tasks
+  - Tasks without a due date will be assigned 9:00 AM when dropped on a calendar day
+* **Completed Tasks:** Appear with strikethrough styling in the calendar
+* **Today's Date:** Highlighted with a colored border for easy reference
 
 ---
 ---

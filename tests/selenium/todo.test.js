@@ -627,4 +627,156 @@ describe('Sticky Note To-Do App Tests', function() {
       assert.strictEqual(dueDates.length, 0, 'No due date should be displayed');
     });
   });
+
+  describe('Calendar View', function() {
+    it('should toggle to calendar view', async function() {
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      // Check that calendar view is visible
+      const calendarView = await driver.findElement(By.id('calendarView'));
+      const isDisplayed = await calendarView.isDisplayed();
+      assert.ok(isDisplayed, 'Calendar view should be visible');
+
+      // Check that list view is hidden
+      const listView = await driver.findElement(By.id('listView'));
+      const listDisplayed = await listView.isDisplayed();
+      assert.strictEqual(listDisplayed, false, 'List view should be hidden');
+    });
+
+    it('should display current month and year', async function() {
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      const monthYear = await driver.findElement(By.id('calendarMonthYear')).getText();
+      assert.ok(monthYear.length > 0, 'Month and year should be displayed');
+
+      // Should contain a month name
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      const hasMonth = months.some(month => monthYear.includes(month));
+      assert.ok(hasMonth, 'Should display a month name');
+    });
+
+    it('should navigate to next month', async function() {
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      const monthYearBefore = await driver.findElement(By.id('calendarMonthYear')).getText();
+
+      const nextBtn = await driver.findElement(By.id('nextMonth'));
+      await nextBtn.click();
+      await driver.sleep(300);
+
+      const monthYearAfter = await driver.findElement(By.id('calendarMonthYear')).getText();
+      assert.notStrictEqual(monthYearBefore, monthYearAfter, 'Month should change');
+    });
+
+    it('should navigate to previous month', async function() {
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      const monthYearBefore = await driver.findElement(By.id('calendarMonthYear')).getText();
+
+      const prevBtn = await driver.findElement(By.id('prevMonth'));
+      await prevBtn.click();
+      await driver.sleep(300);
+
+      const monthYearAfter = await driver.findElement(By.id('calendarMonthYear')).getText();
+      assert.notStrictEqual(monthYearBefore, monthYearAfter, 'Month should change');
+    });
+
+    it('should display calendar grid with 42 cells', async function() {
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      const cells = await driver.findElements(By.className('calendar-cell'));
+      assert.strictEqual(cells.length, 42, 'Calendar should have 42 cells (6 weeks)');
+    });
+
+    it('should display task in calendar on its due date', async function() {
+      // Add a task with today's date
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Calendar task today', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Switch to calendar view
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      // Find today's cell
+      const todayCell = await driver.findElement(By.css('.calendar-cell.today'));
+      const tasks = await todayCell.findElements(By.className('calendar-task'));
+
+      assert.ok(tasks.length > 0, 'Today\'s cell should have at least one task');
+    });
+
+    it('should show task with correct priority color in calendar', async function() {
+      // Add a high priority task with today's date
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      const prioritySelect = await driver.findElement(By.id('priorityInput'));
+
+      await prioritySelect.sendKeys('high');
+      await todoInput.sendKeys('High priority calendar task today', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Switch to calendar view
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      // Find the task in calendar
+      const highPriorityTasks = await driver.findElements(By.css('.calendar-task.priority-high'));
+      assert.ok(highPriorityTasks.length > 0, 'Should display high priority task with correct styling');
+    });
+
+    it('should toggle back to list view', async function() {
+      // First go to calendar view
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      // Then go back to list view
+      const listBtn = await driver.findElement(By.css('[data-view="list"]'));
+      await listBtn.click();
+      await driver.sleep(500);
+
+      // Check that list view is visible
+      const listView = await driver.findElement(By.id('listView'));
+      const isDisplayed = await listView.isDisplayed();
+      assert.ok(isDisplayed, 'List view should be visible');
+
+      // Check that calendar view is hidden
+      const calendarView = await driver.findElement(By.id('calendarView'));
+      const calendarDisplayed = await calendarView.isDisplayed();
+      assert.strictEqual(calendarDisplayed, false, 'Calendar view should be hidden');
+    });
+
+    it('should show completed tasks as strikethrough in calendar', async function() {
+      // Add and complete a task with today's date
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Completed calendar task today', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Complete the task
+      const checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Switch to calendar view
+      const calendarBtn = await driver.findElement(By.css('[data-view="calendar"]'));
+      await calendarBtn.click();
+      await driver.sleep(500);
+
+      // Find completed tasks in calendar
+      const completedTasks = await driver.findElements(By.css('.calendar-task.completed'));
+      assert.ok(completedTasks.length > 0, 'Should display completed task with strikethrough');
+    });
+  });
 });

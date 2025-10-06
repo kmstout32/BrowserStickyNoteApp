@@ -9,6 +9,8 @@ const todoList = document.getElementById('todoList');
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
 let timerInterval = null;
 let currentFilter = 'all'; // all, today, upcoming
+let currentView = 'list'; // list, calendar
+let currentCalendarDate = new Date(); // Current month being viewed in calendar
 
 // Initialize the app
 function init() {
@@ -60,6 +62,33 @@ function init() {
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
+  }
+
+  // View toggle listeners
+  const viewButtons = document.querySelectorAll('.view-btn');
+  viewButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      viewButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.getAttribute('data-view');
+      switchView(currentView);
+    });
+  });
+
+  // Calendar navigation listeners
+  const prevMonthBtn = document.getElementById('prevMonth');
+  const nextMonthBtn = document.getElementById('nextMonth');
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener('click', () => {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+      renderCalendar();
+    });
+  }
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener('click', () => {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+      renderCalendar();
+    });
   }
 }
 
@@ -608,6 +637,217 @@ function renderTodos() {
 
     todoList.appendChild(li);
   });
+}
+
+// View Switching
+function switchView(view) {
+  const listView = document.getElementById('listView');
+  const calendarView = document.getElementById('calendarView');
+
+  if (view === 'list') {
+    listView.classList.remove('hidden');
+    calendarView.classList.add('hidden');
+  } else if (view === 'calendar') {
+    listView.classList.add('hidden');
+    calendarView.classList.remove('hidden');
+    renderCalendar();
+  }
+}
+
+// Calendar Functions
+function renderCalendar() {
+  const monthYear = document.getElementById('calendarMonthYear');
+  const calendarDays = document.getElementById('calendarDays');
+
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+
+  // Set month/year header
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  monthYear.textContent = `${monthNames[month]} ${year}`;
+
+  // Get calendar days
+  const days = getCalendarDays(year, month);
+
+  // Clear calendar
+  calendarDays.innerHTML = '';
+
+  // Get today's date for comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Render each day
+  days.forEach(day => {
+    const cell = document.createElement('div');
+    cell.className = 'calendar-cell';
+    cell.setAttribute('data-date', day.date.toISOString());
+
+    // Check if this day is in a different month
+    if (day.date.getMonth() !== month) {
+      cell.classList.add('other-month');
+    }
+
+    // Check if this day is today
+    const cellDate = new Date(day.date);
+    cellDate.setHours(0, 0, 0, 0);
+    if (cellDate.getTime() === today.getTime()) {
+      cell.classList.add('today');
+    }
+
+    // Add date number
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'calendar-date';
+    dateDiv.textContent = day.date.getDate();
+    cell.appendChild(dateDiv);
+
+    // Find todos for this day
+    const dayTodos = todos.filter(todo => {
+      if (!todo.dueDate) return false;
+      const todoDate = new Date(todo.dueDate);
+      return todoDate.getFullYear() === day.date.getFullYear() &&
+             todoDate.getMonth() === day.date.getMonth() &&
+             todoDate.getDate() === day.date.getDate();
+    });
+
+    // Add todos to the cell
+    dayTodos.forEach(todo => {
+      const taskDiv = document.createElement('div');
+      taskDiv.className = `calendar-task priority-${todo.priority || 'medium'}`;
+      if (todo.completed) {
+        taskDiv.classList.add('completed');
+      }
+      taskDiv.textContent = todo.text;
+      taskDiv.setAttribute('draggable', 'true');
+      taskDiv.setAttribute('data-todo-id', todo.id);
+
+      // Add drag event listeners for calendar tasks
+      taskDiv.addEventListener('dragstart', handleCalendarTaskDragStart);
+      taskDiv.addEventListener('dragend', handleCalendarTaskDragEnd);
+
+      cell.appendChild(taskDiv);
+    });
+
+    // Add drop event listeners for calendar cells
+    cell.addEventListener('dragover', handleCalendarCellDragOver);
+    cell.addEventListener('drop', handleCalendarCellDrop);
+    cell.addEventListener('dragenter', handleCalendarCellDragEnter);
+    cell.addEventListener('dragleave', handleCalendarCellDragLeave);
+
+    calendarDays.appendChild(cell);
+  });
+}
+
+// Get all days to display in calendar (including prev/next month days)
+function getCalendarDays(year, month) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay();
+
+  const days = [];
+
+  // Add days from previous month
+  const prevMonthLastDay = new Date(year, month, 0);
+  const prevMonthDays = prevMonthLastDay.getDate();
+  for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+    days.push({
+      date: new Date(year, month - 1, prevMonthDays - i)
+    });
+  }
+
+  // Add days from current month
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push({
+      date: new Date(year, month, i)
+    });
+  }
+
+  // Add days from next month to fill the grid
+  const remainingCells = 42 - days.length; // 6 weeks * 7 days
+  for (let i = 1; i <= remainingCells; i++) {
+    days.push({
+      date: new Date(year, month + 1, i)
+    });
+  }
+
+  return days;
+}
+
+// Calendar Drag and Drop Handlers
+let draggedCalendarTaskId = null;
+
+function handleCalendarTaskDragStart(e) {
+  draggedCalendarTaskId = parseInt(this.getAttribute('data-todo-id'));
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleCalendarTaskDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.calendar-cell').forEach(cell => {
+    cell.classList.remove('drag-over');
+  });
+}
+
+function handleCalendarCellDragOver(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  e.dataTransfer.dropEffect = 'move';
+  return false;
+}
+
+function handleCalendarCellDragEnter(e) {
+  if (draggedCalendarTaskId !== null) {
+    this.classList.add('drag-over');
+  }
+}
+
+function handleCalendarCellDragLeave(e) {
+  // Only remove if we're actually leaving the cell
+  if (e.target === this) {
+    this.classList.remove('drag-over');
+  }
+}
+
+function handleCalendarCellDrop(e) {
+  if (e.stopPropagation) {
+    e.stopPropagation();
+  }
+
+  this.classList.remove('drag-over');
+
+  if (draggedCalendarTaskId !== null) {
+    const newDate = new Date(this.getAttribute('data-date'));
+    const todo = todos.find(t => t.id === draggedCalendarTaskId);
+
+    if (todo) {
+      // Preserve the time if it exists, otherwise set to 9am
+      if (todo.dueDate) {
+        const oldDate = new Date(todo.dueDate);
+        newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+      } else {
+        newDate.setHours(9, 0, 0, 0);
+      }
+
+      // Format for datetime-local
+      const year = newDate.getFullYear();
+      const month = String(newDate.getMonth() + 1).padStart(2, '0');
+      const day = String(newDate.getDate()).padStart(2, '0');
+      const hours = String(newDate.getHours()).padStart(2, '0');
+      const minutes = String(newDate.getMinutes()).padStart(2, '0');
+      todo.dueDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+      saveTodos();
+      renderCalendar();
+    }
+
+    draggedCalendarTaskId = null;
+  }
+
+  return false;
 }
 
 // Start the app

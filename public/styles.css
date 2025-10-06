@@ -504,3 +504,193 @@ h1 {
 .todo-item.priority-low-card {
   border-left: 6px solid #2e7d32;
 }
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.view-btn {
+  flex: 1;
+  padding: 12px 20px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.view-btn:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--accent-color);
+}
+
+.view-btn.active {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  font-weight: 600;
+}
+
+.view-container.hidden {
+  display: none;
+}
+
+/* Calendar View */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+}
+
+.calendar-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+}
+
+.calendar-nav-btn {
+  padding: 8px 16px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.calendar-nav-btn:hover {
+  background: var(--accent-hover);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.calendar-day-header {
+  padding: 10px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  min-height: 400px;
+}
+
+.calendar-cell {
+  min-height: 100px;
+  padding: 8px;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  position: relative;
+  transition: all 0.3s;
+  overflow-y: auto;
+  max-height: 150px;
+}
+
+.calendar-cell:hover {
+  background: var(--card-bg-hover);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.calendar-cell.other-month {
+  opacity: 0.4;
+  background: var(--input-bg);
+}
+
+.calendar-cell.today {
+  border-color: var(--accent-color);
+  border-width: 3px;
+  background: var(--card-bg-hover);
+}
+
+.calendar-cell.drag-over {
+  border-color: var(--accent-color);
+  border-style: dashed;
+  background: var(--accent-color);
+  opacity: 0.2;
+}
+
+.calendar-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.calendar-task {
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  background: var(--input-bg);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: move;
+  border-left: 3px solid var(--accent-color);
+  transition: all 0.2s;
+  word-wrap: break-word;
+}
+
+.calendar-task:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.calendar-task.dragging {
+  opacity: 0.5;
+}
+
+.calendar-task.priority-high {
+  border-left-color: #c62828;
+  background: #ffebee;
+}
+
+[data-theme="dark"] .calendar-task.priority-high {
+  background: rgba(198, 40, 40, 0.2);
+}
+
+.calendar-task.priority-medium {
+  border-left-color: #ef6c00;
+  background: #fff3e0;
+}
+
+[data-theme="dark"] .calendar-task.priority-medium {
+  background: rgba(239, 108, 0, 0.2);
+}
+
+.calendar-task.priority-low {
+  border-left-color: #2e7d32;
+  background: #e8f5e9;
+}
+
+[data-theme="dark"] .calendar-task.priority-low {
+  background: rgba(46, 125, 50, 0.2);
+}
+
+.calendar-task.completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
