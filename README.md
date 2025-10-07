@@ -22,7 +22,10 @@ Building this project with an AI agent was a major achievement. The primary take
 ## 🛠️ Technology Stack
 
 * **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
-* **Data Persistence:** `localStorage` API
+* **Backend (Calendar Sync):** C# ASP.NET Core Web API (.NET 8)
+* **Data Persistence:** `localStorage` API (Frontend), SQLite (Backend)
+* **Calendar Integration:** Google Calendar API, Microsoft Graph API (Outlook)
+* **Authentication:** OAuth 2.0
 * **Testing:** **Selenium WebDriver** (Integrated for automated End-to-End testing)
 * **Development Tooling:** Claude Code (AI Agentic Tool)
 
@@ -136,6 +139,33 @@ Keep your active task list clean while preserving a complete history of your acc
 * **Toggle Completion:** Uncheck tasks directly in the archive to restore them
 
 The Archive view helps you track your productivity over time while keeping your main task list focused on what's next.
+
+## 📅 Calendar Integration (C# Backend)
+
+Sync your tasks to Google Calendar and Microsoft Outlook Calendar for seamless cross-platform access:
+
+**Features:**
+* **Two-Way OAuth Authentication:** Securely connect to Google and Microsoft calendars
+* **Automatic Sync:** Tasks are automatically created as calendar events with due dates
+* **Priority Color-Coding:** High/Medium/Low priority tasks get different colors in your calendar
+* **Real-Time Updates:** Changes to tasks sync to your calendars instantly
+* **Delete Sync:** Deleted tasks are also removed from synced calendars
+* **Token Management:** Secure storage and automatic refresh of OAuth tokens
+
+**Setup:**
+1. Navigate to the `CalendarSyncAPI` directory
+2. Follow the setup instructions in `CalendarSyncAPI/README.md`
+3. Configure Google Cloud and Microsoft Azure credentials
+4. Run the C# backend: `dotnet run`
+5. The frontend will detect the API and enable calendar sync features
+
+**API Endpoints:**
+* OAuth authentication flows for Google and Microsoft
+* Sync tasks to calendars
+* Delete tasks from calendars
+* Check authentication status
+
+For detailed setup instructions, see [CalendarSyncAPI/README.md](CalendarSyncAPI/README.md)
 
 ---
 ---
