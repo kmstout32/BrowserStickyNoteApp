@@ -32,8 +32,10 @@ Building this project with an AI agent was a major achievement. The primary take
 * **Full CRUD Support:** Users can **Create**, **Read**, **Update** (Edit by clicking the task text), and **Delete** tasks.
 * **Natural Language Date Parsing:** Type phrases like "tomorrow morning", "Friday at 3pm", "in 2 hours", or "next week" in your task, and the app automatically extracts and sets the due date.
 * **Calendar View:** Visualize all tasks on an interactive monthly calendar grid. Drag and drop tasks between days to reschedule them instantly.
-* **List & Calendar Toggle:** Seamlessly switch between traditional list view and calendar view with a single click.
+* **Archive View:** Completed tasks automatically move to a dedicated archive with completion dates, keeping your active task list clean and focused.
+* **Three View Modes:** Seamlessly switch between List View, Calendar View, and Archive with a single click.
 * **Month Navigation:** Navigate through months with previous/next buttons to view future tasks.
+* **Completion Tracking:** Every completed task records its completion date, allowing you to review your productivity history.
 * **Priority Levels:** Assign High, Medium, or Low priority to tasks with color-coded visual indicators (flag icons and colored left borders).
 * **Drag-and-Drop Reordering:** Click and drag task cards to reorder them by importance (List View) or reschedule them (Calendar View).
 * **Tab Filtering:** View all tasks, or filter by "Today" (due today + overdue) or "Upcoming" (next 7 days).
@@ -44,7 +46,7 @@ Building this project with an AI agent was a major achievement. The primary take
 
 ## ✅ Automated Testing (End-to-End)
 
-This project includes **42 automated tests** built with **Selenium WebDriver** to validate core functionality including:
+This project includes **50 automated tests** built with **Selenium WebDriver** to validate core functionality including:
 * Basic CRUD operations
 * Todo completion and deletion
 * Due date and countdown timers
@@ -54,7 +56,9 @@ This project includes **42 automated tests** built with **Selenium WebDriver** t
 * Drag-and-drop reordering
 * Natural language date parsing
 * Calendar view and navigation
-* View switching (List ↔ Calendar)
+* Archive view with completion tracking
+* View switching (List ↔ Calendar ↔ Archive)
+* Task restoration from archive
 
 ### How to Run Tests
 
@@ -114,6 +118,24 @@ Switch to **Calendar View** to see all your tasks displayed on a monthly grid:
   - Tasks without a due date will be assigned 9:00 AM when dropped on a calendar day
 * **Completed Tasks:** Appear with strikethrough styling in the calendar
 * **Today's Date:** Highlighted with a colored border for easy reference
+
+### Archive View
+
+Keep your active task list clean while preserving a complete history of your accomplishments:
+
+* **Auto-Archive:** Completed tasks automatically move to the Archive view
+* **Completion Dates:** See exactly when each task was completed with smart date formatting:
+  - "Today at 2:30 PM" - for tasks completed today
+  - "Yesterday at 10:15 AM" - for tasks completed yesterday
+  - "3 days ago" - for tasks completed within the last week
+  - Full date/time for older completions
+* **Restore Tasks:** Accidentally completed a task? Click "Restore" to move it back to your active list
+* **Delete Permanently:** Remove tasks from the archive when you no longer need them
+* **Priority Preserved:** Archived tasks maintain their priority color-coding
+* **Due Date History:** View original due dates alongside completion dates
+* **Toggle Completion:** Uncheck tasks directly in the archive to restore them
+
+The Archive view helps you track your productivity over time while keeping your main task list focused on what's next.
 
 ---
 ---

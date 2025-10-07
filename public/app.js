@@ -287,6 +287,12 @@ function addTodo() {
   todos.push(todo);
   saveTodos();
   renderTodos();
+
+  // Update calendar view if it's currently active
+  if (currentView === 'calendar') {
+    renderCalendar();
+  }
+
   todoInput.value = '';
   priorityInput.value = 'medium';
   dueDateInput.value = '';
@@ -302,6 +308,13 @@ function deleteTodo(id) {
   });
   saveTodos();
   renderTodos();
+
+  // Update other views based on current view
+  if (currentView === 'calendar') {
+    renderCalendar();
+  } else if (currentView === 'archive') {
+    renderArchive();
+  }
 }
 
 // Toggle todo completion
@@ -309,8 +322,23 @@ function toggleTodo(id) {
   const todo = todos.find(todo => todo.id === id);
   if (todo) {
     todo.completed = !todo.completed;
+
+    // Set completion date when marking as complete, remove when uncompleting
+    if (todo.completed) {
+      todo.completedDate = new Date().toISOString();
+    } else {
+      todo.completedDate = null;
+    }
+
     saveTodos();
     renderTodos();
+
+    // Update other views based on current view
+    if (currentView === 'calendar') {
+      renderCalendar();
+    } else if (currentView === 'archive') {
+      renderArchive();
+    }
   }
 }
 
@@ -367,11 +395,21 @@ function saveEdit(id) {
 
   saveTodos();
   renderTodos();
+
+  // Update calendar view if it's currently active
+  if (currentView === 'calendar') {
+    renderCalendar();
+  }
 }
 
 // Cancel editing
 function cancelEdit() {
   renderTodos();
+
+  // Update calendar view if it's currently active
+  if (currentView === 'calendar') {
+    renderCalendar();
+  }
 }
 
 // Save todos to localStorage
@@ -573,6 +611,11 @@ function handleDrop(e) {
 
       saveTodos();
       renderTodos();
+
+      // Update calendar view if it's currently active
+      if (currentView === 'calendar') {
+        renderCalendar();
+      }
     }
   }
 
@@ -583,8 +626,11 @@ function handleDrop(e) {
 function renderTodos() {
   todoList.innerHTML = '';
 
+  // Exclude completed tasks from list view (they go to archive)
+  let activeTodos = todos.filter(todo => !todo.completed);
+
   // Apply current filter
-  let filteredTodos = filterTodos(todos);
+  let filteredTodos = filterTodos(activeTodos);
 
   // Sort todos by order
   const sortedTodos = [...filteredTodos].sort((a, b) => {
@@ -643,14 +689,26 @@ function renderTodos() {
 function switchView(view) {
   const listView = document.getElementById('listView');
   const calendarView = document.getElementById('calendarView');
+  const archiveView = document.getElementById('archiveView');
+  const container = document.querySelector('.container');
 
   if (view === 'list') {
     listView.classList.remove('hidden');
     calendarView.classList.add('hidden');
+    archiveView.classList.add('hidden');
+    container.classList.remove('calendar-expanded');
   } else if (view === 'calendar') {
     listView.classList.add('hidden');
     calendarView.classList.remove('hidden');
+    archiveView.classList.add('hidden');
+    container.classList.add('calendar-expanded');
     renderCalendar();
+  } else if (view === 'archive') {
+    listView.classList.add('hidden');
+    calendarView.classList.add('hidden');
+    archiveView.classList.remove('hidden');
+    container.classList.remove('calendar-expanded');
+    renderArchive();
   }
 }
 
@@ -701,9 +759,9 @@ function renderCalendar() {
     dateDiv.textContent = day.date.getDate();
     cell.appendChild(dateDiv);
 
-    // Find todos for this day
+    // Find todos for this day (exclude completed tasks)
     const dayTodos = todos.filter(todo => {
-      if (!todo.dueDate) return false;
+      if (!todo.dueDate || todo.completed) return false;
       const todoDate = new Date(todo.dueDate);
       return todoDate.getFullYear() === day.date.getFullYear() &&
              todoDate.getMonth() === day.date.getMonth() &&
@@ -848,6 +906,120 @@ function handleCalendarCellDrop(e) {
   }
 
   return false;
+}
+
+// Archive Functions
+function renderArchive() {
+  const archiveList = document.getElementById('archiveList');
+  const emptyArchive = document.getElementById('emptyArchive');
+
+  // Get all completed todos
+  const completedTodos = todos.filter(todo => todo.completed);
+
+  // Sort by completion date (most recent first)
+  completedTodos.sort((a, b) => {
+    if (!a.completedDate) return 1;
+    if (!b.completedDate) return -1;
+    return new Date(b.completedDate) - new Date(a.completedDate);
+  });
+
+  // Clear list
+  archiveList.innerHTML = '';
+
+  if (completedTodos.length === 0) {
+    emptyArchive.classList.remove('hidden');
+  } else {
+    emptyArchive.classList.add('hidden');
+
+    completedTodos.forEach(todo => {
+      const li = document.createElement('li');
+      const priorityClass = `priority-${todo.priority || 'medium'}-card`;
+      li.className = `archive-item ${priorityClass}`;
+      li.setAttribute('data-id', todo.id);
+
+      const priority = todo.priority || 'medium';
+      const priorityLabels = {
+        high: 'High',
+        medium: 'Medium',
+        low: 'Low'
+      };
+      const priorityBadgeHtml = `<span class="priority-badge priority-${priority}">${priorityLabels[priority]}</span>`;
+
+      // Format completion date
+      const completedDateHtml = todo.completedDate ?
+        `<div class="completed-date">Completed: ${formatCompletionDate(todo.completedDate)}</div>` : '';
+
+      // Format due date if present
+      const dueDateHtml = todo.dueDate ?
+        `<div>Due: ${formatDueDateArchive(todo.dueDate)}</div>` : '';
+
+      li.innerHTML = `
+        <input type="checkbox" class="archive-checkbox" checked onchange="toggleTodo(${todo.id})">
+        <div class="archive-content">
+          <div class="archive-task-info">
+            ${priorityBadgeHtml}
+            <span class="archive-text">${todo.text}</span>
+          </div>
+          <div class="archive-dates">
+            ${completedDateHtml}
+            ${dueDateHtml}
+          </div>
+        </div>
+        <div class="archive-actions">
+          <button class="restore-btn" onclick="restoreTodo(${todo.id})">Restore</button>
+          <button class="delete-archive-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+        </div>
+      `;
+
+      archiveList.appendChild(li);
+    });
+  }
+}
+
+// Format completion date for display
+function formatCompletionDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  const formatted = date.toLocaleDateString('en-US', options);
+
+  if (diffDays === 0) {
+    return `Today at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (diffDays === 1) {
+    return `Yesterday at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  } else {
+    return formatted;
+  }
+}
+
+// Format due date for archive display
+function formatDueDateArchive(dueDate) {
+  if (!dueDate) return '';
+  const date = new Date(dueDate);
+  const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return date.toLocaleDateString('en-US', options);
+}
+
+// Restore a todo (unmark as completed)
+function restoreTodo(id) {
+  const todo = todos.find(t => t.id === id);
+  if (todo) {
+    todo.completed = false;
+    todo.completedDate = null;
+    saveTodos();
+    renderArchive();
+
+    // Update other views if needed
+    renderTodos();
+    if (currentView === 'calendar') {
+      renderCalendar();
+    }
+  }
 }
 
 // Start the app

@@ -105,13 +105,20 @@ describe('Sticky Note To-Do App Tests', function() {
       const checkbox = await driver.findElement(By.className('todo-checkbox'));
       await checkbox.click();
 
-      // Wait a moment for the class to update
+      // Wait a moment for the task to be moved to archive
       await driver.sleep(500);
 
-      // Check if the todo item has the 'completed' class
-      const todoItem = await driver.findElement(By.className('todo-item'));
-      const classes = await todoItem.getAttribute('class');
-      assert.ok(classes.includes('completed'));
+      // Completed tasks should not appear in list view
+      const listTasks = await driver.findElements(By.className('todo-item'));
+      assert.strictEqual(listTasks.length, 0, 'Completed tasks should not appear in list');
+
+      // Switch to archive and verify task is there
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      const archiveTasks = await driver.findElements(By.className('archive-item'));
+      assert.ok(archiveTasks.length > 0, 'Completed task should appear in archive');
     });
 
     it('should toggle todo completion state', async function() {
@@ -125,20 +132,33 @@ describe('Sticky Note To-Do App Tests', function() {
       await checkbox.click();
       await driver.sleep(500);
 
-      // Re-find element after render
-      let todoItem = await driver.findElement(By.className('todo-item'));
-      let classes = await todoItem.getAttribute('class');
-      assert.ok(classes.includes('completed'));
+      // Task should be moved to archive
+      let listTasks = await driver.findElements(By.className('todo-item'));
+      assert.strictEqual(listTasks.length, 0, 'Completed task should not be in list');
 
-      // Uncomplete it - re-find checkbox
-      checkbox = await driver.findElement(By.className('todo-checkbox'));
+      // Switch to archive
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Uncomplete it from archive
+      checkbox = await driver.findElement(By.className('archive-checkbox'));
       await checkbox.click();
       await driver.sleep(500);
 
-      // Re-find element after render
-      todoItem = await driver.findElement(By.className('todo-item'));
-      classes = await todoItem.getAttribute('class');
-      assert.ok(!classes.includes('completed'));
+      // Archive should be empty
+      const emptyState = await driver.findElement(By.id('emptyArchive'));
+      const isDisplayed = await emptyState.isDisplayed();
+      assert.ok(isDisplayed, 'Archive should be empty after unchecking');
+
+      // Switch back to list view
+      const listBtn = await driver.findElement(By.css('[data-view="list"]'));
+      await listBtn.click();
+      await driver.sleep(500);
+
+      // Task should be back in list
+      listTasks = await driver.findElements(By.className('todo-item'));
+      assert.ok(listTasks.length > 0, 'Uncompleted task should be back in list');
     });
   });
 
@@ -284,10 +304,19 @@ describe('Sticky Note To-Do App Tests', function() {
       await driver.navigate().refresh();
       await driver.wait(until.elementLocated(By.id('todoInput')), 5000);
 
-      // Check if still completed
-      const refreshedCheckbox = await driver.findElement(By.className('todo-checkbox'));
-      const isChecked = await refreshedCheckbox.isSelected();
-      assert.ok(isChecked);
+      // Completed task should not be in list view
+      const listTasks = await driver.findElements(By.className('todo-item'));
+      assert.strictEqual(listTasks.length, 0, 'Completed task should not be in list after refresh');
+
+      // Switch to archive and check if task is still there
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Check if task appears in archive with checked checkbox
+      const archiveCheckbox = await driver.findElement(By.className('archive-checkbox'));
+      const isChecked = await archiveCheckbox.isSelected();
+      assert.ok(isChecked, 'Task should remain completed in archive after refresh');
     });
   });
 
@@ -774,9 +803,190 @@ describe('Sticky Note To-Do App Tests', function() {
       await calendarBtn.click();
       await driver.sleep(500);
 
-      // Find completed tasks in calendar
-      const completedTasks = await driver.findElements(By.css('.calendar-task.completed'));
-      assert.ok(completedTasks.length > 0, 'Should display completed task with strikethrough');
+      // Completed tasks should NOT appear in calendar (they go to archive)
+      const tasks = await driver.findElements(By.className('calendar-task'));
+      assert.strictEqual(tasks.length, 0, 'Completed tasks should not appear in calendar');
+    });
+  });
+
+  describe('Archive View', function() {
+    it('should toggle to archive view', async function() {
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Check that archive view is visible
+      const archiveView = await driver.findElement(By.id('archiveView'));
+      const isDisplayed = await archiveView.isDisplayed();
+      assert.ok(isDisplayed, 'Archive view should be visible');
+    });
+
+    it('should show empty state when no completed tasks', async function() {
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Check for empty state
+      const emptyState = await driver.findElement(By.id('emptyArchive'));
+      const isDisplayed = await emptyState.isDisplayed();
+      assert.ok(isDisplayed, 'Empty state should be visible when no completed tasks');
+    });
+
+    it('should move completed task to archive', async function() {
+      // Add a task
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Task to complete', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Complete the task
+      const checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Check that task is no longer in list view
+      const listTasks = await driver.findElements(By.className('todo-item'));
+      assert.strictEqual(listTasks.length, 0, 'Completed task should not appear in list');
+
+      // Switch to archive view
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Check that task appears in archive
+      const archiveTasks = await driver.findElements(By.className('archive-item'));
+      assert.ok(archiveTasks.length > 0, 'Completed task should appear in archive');
+    });
+
+    it('should display completion date in archive', async function() {
+      // Add and complete a task
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Task with completion date', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Switch to archive view
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Check for completion date
+      const completedDate = await driver.findElement(By.className('completed-date'));
+      const dateText = await completedDate.getText();
+      assert.ok(dateText.includes('Completed'), 'Should display completion date');
+    });
+
+    it('should restore task from archive', async function() {
+      // Add and complete a task
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Task to restore', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Switch to archive view
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Click restore button
+      const restoreBtn = await driver.findElement(By.className('restore-btn'));
+      await restoreBtn.click();
+      await driver.sleep(300);
+
+      // Check that archive is empty
+      const emptyState = await driver.findElement(By.id('emptyArchive'));
+      const isDisplayed = await emptyState.isDisplayed();
+      assert.ok(isDisplayed, 'Archive should be empty after restore');
+
+      // Switch back to list view
+      const listBtn = await driver.findElement(By.css('[data-view="list"]'));
+      await listBtn.click();
+      await driver.sleep(500);
+
+      // Check that task is back in list
+      const listTasks = await driver.findElements(By.className('todo-item'));
+      assert.ok(listTasks.length > 0, 'Restored task should appear in list');
+    });
+
+    it('should delete task from archive', async function() {
+      // Add and complete a task
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Task to delete from archive', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      const checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Switch to archive view
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Click delete button
+      const deleteBtn = await driver.findElement(By.className('delete-archive-btn'));
+      await deleteBtn.click();
+      await driver.sleep(300);
+
+      // Check that archive is empty
+      const emptyState = await driver.findElement(By.id('emptyArchive'));
+      const isDisplayed = await emptyState.isDisplayed();
+      assert.ok(isDisplayed, 'Archive should be empty after delete');
+    });
+
+    it('should show archive tasks with priority colors', async function() {
+      // Add a high priority task
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      const prioritySelect = await driver.findElement(By.id('priorityInput'));
+
+      await prioritySelect.sendKeys('high');
+      await todoInput.sendKeys('High priority archived task', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      // Complete the task
+      const checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Switch to archive view
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Check for high priority styling
+      const highPriorityItems = await driver.findElements(By.css('.archive-item.priority-high-card'));
+      assert.ok(highPriorityItems.length > 0, 'Should display high priority styling in archive');
+    });
+
+    it('should uncomplete task via checkbox in archive', async function() {
+      // Add and complete a task
+      const todoInput = await driver.findElement(By.id('todoInput'));
+      await todoInput.sendKeys('Task to uncomplete via checkbox', Key.RETURN);
+      await driver.wait(until.elementLocated(By.className('todo-item')), 3000);
+
+      let checkbox = await driver.findElement(By.className('todo-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Switch to archive view
+      const archiveBtn = await driver.findElement(By.css('[data-view="archive"]'));
+      await archiveBtn.click();
+      await driver.sleep(500);
+
+      // Click checkbox in archive
+      checkbox = await driver.findElement(By.className('archive-checkbox'));
+      await checkbox.click();
+      await driver.sleep(300);
+
+      // Check that archive is empty
+      const emptyState = await driver.findElement(By.id('emptyArchive'));
+      const isDisplayed = await emptyState.isDisplayed();
+      assert.ok(isDisplayed, 'Archive should be empty after unchecking');
     });
   });
 });

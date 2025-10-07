@@ -56,7 +56,11 @@ body {
   padding: 30px;
   width: 100%;
   max-width: 500px;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
+}
+
+.container.calendar-expanded {
+  max-width: 1200px;
 }
 
 .header {
@@ -579,37 +583,37 @@ h1 {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  margin-bottom: 5px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .calendar-day-header {
-  padding: 10px;
+  padding: 12px;
   text-align: center;
   font-weight: 600;
   color: var(--text-secondary);
   background: var(--card-bg);
   border-radius: 5px;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  min-height: 400px;
+  gap: 8px;
+  min-height: 500px;
 }
 
 .calendar-cell {
-  min-height: 100px;
-  padding: 8px;
+  min-height: 140px;
+  padding: 10px;
   background: var(--card-bg);
   border: 2px solid var(--border-color);
   border-radius: 8px;
   position: relative;
   transition: all 0.3s;
   overflow-y: auto;
-  max-height: 150px;
+  max-height: 200px;
 }
 
 .calendar-cell:hover {
@@ -638,20 +642,21 @@ h1 {
 .calendar-date {
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 5px;
-  font-size: 14px;
+  margin-bottom: 8px;
+  font-size: 16px;
 }
 
 .calendar-task {
-  padding: 4px 6px;
-  margin-bottom: 4px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
   background: var(--input-bg);
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 5px;
+  font-size: 13px;
   cursor: move;
-  border-left: 3px solid var(--accent-color);
+  border-left: 4px solid var(--accent-color);
   transition: all 0.2s;
   word-wrap: break-word;
+  line-height: 1.4;
 }
 
 .calendar-task:hover {
@@ -693,4 +698,153 @@ h1 {
 .calendar-task.completed {
   opacity: 0.6;
   text-decoration: line-through;
+}
+
+/* Archive View */
+.archive-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.archive-header h2 {
+  margin: 0 0 10px 0;
+  color: var(--text-primary);
+}
+
+.archive-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+#archiveList {
+  list-style: none;
+}
+
+.archive-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.archive-item:hover {
+  background: var(--card-bg-hover);
+  box-shadow: 0 4px 8px var(--shadow-color);
+  transform: translateY(-2px);
+}
+
+.archive-item.priority-high-card {
+  border-left: 6px solid #c62828;
+}
+
+.archive-item.priority-medium-card {
+  border-left: 6px solid #ef6c00;
+}
+
+.archive-item.priority-low-card {
+  border-left: 6px solid #2e7d32;
+}
+
+.archive-checkbox {
+  margin-right: 15px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.archive-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.archive-task-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.archive-text {
+  color: var(--text-primary);
+  font-size: 16px;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.archive-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.completed-date {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.completed-date::before {
+  content: '✓ ';
+}
+
+.archive-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.restore-btn {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.restore-btn:hover {
+  background: #218838;
+}
+
+.delete-archive-btn {
+  padding: 8px 16px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.delete-archive-btn:hover {
+  background: #c82333;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.empty-state p:first-child {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
 }

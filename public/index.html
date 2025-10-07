@@ -30,6 +30,7 @@
     <div class="view-toggle">
       <button class="view-btn active" data-view="list">📋 List View</button>
       <button class="view-btn" data-view="calendar">📅 Calendar View</button>
+      <button class="view-btn" data-view="archive">📦 Archive</button>
     </div>
 
     <!-- List View -->
@@ -60,6 +61,19 @@
         <div class="calendar-day-header">Sat</div>
       </div>
       <div id="calendarDays" class="calendar-days"></div>
+    </div>
+
+    <!-- Archive View -->
+    <div id="archiveView" class="view-container hidden">
+      <div class="archive-header">
+        <h2>📦 Completed Tasks Archive</h2>
+        <p class="archive-subtitle">View all your completed tasks with completion dates</p>
+      </div>
+      <ul id="archiveList"></ul>
+      <div id="emptyArchive" class="empty-state hidden">
+        <p>🎉 No completed tasks yet!</p>
+        <p>Complete some tasks to see them appear here.</p>
+      </div>
     </div>
   </div>
 
