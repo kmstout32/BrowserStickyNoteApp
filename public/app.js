@@ -35,6 +35,7 @@ function init() {
 
   renderTodos();
   startTimerUpdates();
+  startDateTimeUpdates();
 
   // Event listeners
   addBtn.addEventListener('click', addTodo);
@@ -121,6 +122,46 @@ function startTimerUpdates() {
   timerInterval = setInterval(() => {
     updateAllTimers();
   }, 1000); // Update every second
+}
+
+// Date and Time Bar Functions
+let dateTimeInterval = null;
+
+function startDateTimeUpdates() {
+  updateDateTime(); // Initial update
+  if (dateTimeInterval) clearInterval(dateTimeInterval);
+  dateTimeInterval = setInterval(() => {
+    updateDateTime();
+  }, 1000); // Update every second
+}
+
+function updateDateTime() {
+  const now = new Date();
+  const dateTimeElement = document.getElementById('currentDateTime');
+  const timezoneElement = document.getElementById('timezoneText');
+
+  if (!dateTimeElement || !timezoneElement) return;
+
+  // Format date and time
+  const options = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  };
+
+  const formattedDateTime = now.toLocaleString('en-US', options);
+  dateTimeElement.textContent = formattedDateTime;
+
+  // Get timezone information
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timezoneOffset = -now.getTimezoneOffset() / 60;
+  const offsetSign = timezoneOffset >= 0 ? '+' : '';
+  timezoneElement.textContent = `${timezone} (UTC${offsetSign}${timezoneOffset})`;
 }
 
 // Natural Language Date Parser

@@ -104,6 +104,57 @@ h1 {
   transform: rotate(180deg);
 }
 
+/* Date and Time Bar */
+.datetime-bar {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  transition: all 0.3s ease;
+}
+
+.datetime-bar:hover {
+  box-shadow: 0 4px 12px var(--shadow-color);
+  transform: translateY(-1px);
+}
+
+.datetime-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: white;
+}
+
+.datetime-icon {
+  font-size: 20px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.datetime-text {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.timezone-text {
+  font-size: 13px;
+  opacity: 0.9;
+  font-weight: 400;
+  padding-left: 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
+}
+
 .input-section {
   display: flex;
   gap: 10px;
