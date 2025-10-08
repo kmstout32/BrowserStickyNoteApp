@@ -7,9 +7,10 @@ const todoList = document.getElementById('todoList');
 
 // Load todos from localStorage
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
+let deletedTodos = JSON.parse(localStorage.getItem('deletedTodos')) || [];
 let timerInterval = null;
 let currentFilter = 'all'; // all, today, upcoming
-let currentView = 'list'; // list, calendar
+let currentView = 'list'; // list, calendar, archive, deleted
 let currentCalendarDate = new Date(); // Current month being viewed in calendar
 
 // Initialize the app
@@ -299,8 +300,20 @@ function addTodo() {
   todoInput.focus();
 }
 
-// Delete a todo
+// Delete a todo (move to deleted list)
 function deleteTodo(id) {
+  const todo = todos.find(t => t.id === id);
+
+  if (todo) {
+    // Add deleted timestamp
+    todo.deletedDate = new Date().toISOString();
+
+    // Move to deleted list
+    deletedTodos.push(todo);
+    saveDeletedTodos();
+  }
+
+  // Remove from active todos
   todos = todos.filter(todo => todo.id !== id);
   // Reorder remaining todos
   todos.forEach((todo, index) => {
@@ -314,6 +327,8 @@ function deleteTodo(id) {
     renderCalendar();
   } else if (currentView === 'archive') {
     renderArchive();
+  } else if (currentView === 'deleted') {
+    renderDeleted();
   }
 }
 
@@ -415,6 +430,11 @@ function cancelEdit() {
 // Save todos to localStorage
 function saveTodos() {
   localStorage.setItem('todos', JSON.stringify(todos));
+}
+
+// Save deleted todos to localStorage
+function saveDeletedTodos() {
+  localStorage.setItem('deletedTodos', JSON.stringify(deletedTodos));
 }
 
 // Check if a todo is overdue
@@ -690,25 +710,36 @@ function switchView(view) {
   const listView = document.getElementById('listView');
   const calendarView = document.getElementById('calendarView');
   const archiveView = document.getElementById('archiveView');
+  const deletedView = document.getElementById('deletedView');
   const container = document.querySelector('.container');
 
   if (view === 'list') {
     listView.classList.remove('hidden');
     calendarView.classList.add('hidden');
     archiveView.classList.add('hidden');
+    deletedView.classList.add('hidden');
     container.classList.remove('calendar-expanded');
   } else if (view === 'calendar') {
     listView.classList.add('hidden');
     calendarView.classList.remove('hidden');
     archiveView.classList.add('hidden');
+    deletedView.classList.add('hidden');
     container.classList.add('calendar-expanded');
     renderCalendar();
   } else if (view === 'archive') {
     listView.classList.add('hidden');
     calendarView.classList.add('hidden');
     archiveView.classList.remove('hidden');
+    deletedView.classList.add('hidden');
     container.classList.remove('calendar-expanded');
     renderArchive();
+  } else if (view === 'deleted') {
+    listView.classList.add('hidden');
+    calendarView.classList.add('hidden');
+    archiveView.classList.add('hidden');
+    deletedView.classList.remove('hidden');
+    container.classList.remove('calendar-expanded');
+    renderDeleted();
   }
 }
 
@@ -1019,6 +1050,121 @@ function restoreTodo(id) {
     if (currentView === 'calendar') {
       renderCalendar();
     }
+  }
+}
+
+// Deleted View Functions
+function renderDeleted() {
+  const deletedList = document.getElementById('deletedList');
+  const emptyDeleted = document.getElementById('emptyDeleted');
+
+  // Sort by deleted date (most recent first)
+  deletedTodos.sort((a, b) => {
+    if (!a.deletedDate) return 1;
+    if (!b.deletedDate) return -1;
+    return new Date(b.deletedDate) - new Date(a.deletedDate);
+  });
+
+  // Clear list
+  deletedList.innerHTML = '';
+
+  if (deletedTodos.length === 0) {
+    emptyDeleted.classList.remove('hidden');
+  } else {
+    emptyDeleted.classList.add('hidden');
+
+    deletedTodos.forEach(todo => {
+      const li = document.createElement('li');
+      const priorityClass = `priority-${todo.priority || 'medium'}-card`;
+      li.className = `deleted-item ${priorityClass}`;
+      li.setAttribute('data-id', todo.id);
+
+      const priority = todo.priority || 'medium';
+      const priorityLabels = {
+        high: 'High',
+        medium: 'Medium',
+        low: 'Low'
+      };
+      const priorityBadgeHtml = `<span class="priority-badge priority-${priority}">${priorityLabels[priority]}</span>`;
+
+      // Format deleted date
+      const deletedDateHtml = todo.deletedDate ?
+        `<div class="deleted-date">Deleted: ${formatDeletedDate(todo.deletedDate)}</div>` : '';
+
+      // Format due date if present
+      const dueDateHtml = todo.dueDate ?
+        `<div>Due: ${formatDueDateArchive(todo.dueDate)}</div>` : '';
+
+      li.innerHTML = `
+        <div class="deleted-content">
+          <div class="deleted-task-info">
+            ${priorityBadgeHtml}
+            <span class="deleted-text">${todo.text}</span>
+          </div>
+          <div class="deleted-dates">
+            ${deletedDateHtml}
+            ${dueDateHtml}
+          </div>
+        </div>
+        <div class="deleted-actions">
+          <button class="restore-deleted-btn" onclick="restoreDeletedTodo(${todo.id})">Restore</button>
+          <button class="permanently-delete-btn" onclick="permanentlyDeleteTodo(${todo.id})">Delete Forever</button>
+        </div>
+      `;
+
+      deletedList.appendChild(li);
+    });
+  }
+}
+
+// Format deleted date for display
+function formatDeletedDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  const formatted = date.toLocaleDateString('en-US', options);
+
+  if (diffDays === 0) {
+    return `Today at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (diffDays === 1) {
+    return `Yesterday at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  } else {
+    return formatted;
+  }
+}
+
+// Restore a deleted todo
+function restoreDeletedTodo(id) {
+  const todo = deletedTodos.find(t => t.id === id);
+  if (todo) {
+    // Remove deleted timestamp
+    delete todo.deletedDate;
+
+    // Add back to todos with new order
+    todo.order = todos.length;
+    todos.push(todo);
+    saveTodos();
+
+    // Remove from deleted list
+    deletedTodos = deletedTodos.filter(t => t.id !== id);
+    saveDeletedTodos();
+
+    renderDeleted();
+    renderTodos();
+  }
+}
+
+// Permanently delete a todo
+function permanentlyDeleteTodo(id) {
+  if (confirm('Are you sure you want to permanently delete this task? This action cannot be undone.')) {
+    deletedTodos = deletedTodos.filter(t => t.id !== id);
+    saveDeletedTodos();
+    renderDeleted();
   }
 }
 

@@ -31,6 +31,7 @@
       <button class="view-btn active" data-view="list">📋 List View</button>
       <button class="view-btn" data-view="calendar">📅 Calendar View</button>
       <button class="view-btn" data-view="archive">📦 Archive</button>
+      <button class="view-btn" data-view="deleted">🗑️ Deleted</button>
     </div>
 
     <!-- List View -->
@@ -73,6 +74,19 @@
       <div id="emptyArchive" class="empty-state hidden">
         <p>🎉 No completed tasks yet!</p>
         <p>Complete some tasks to see them appear here.</p>
+      </div>
+    </div>
+
+    <!-- Deleted View -->
+    <div id="deletedView" class="view-container hidden">
+      <div class="deleted-header">
+        <h2>🗑️ Deleted Tasks</h2>
+        <p class="deleted-subtitle">View and restore deleted tasks</p>
+      </div>
+      <ul id="deletedList"></ul>
+      <div id="emptyDeleted" class="empty-state hidden">
+        <p>✨ No deleted tasks!</p>
+        <p>Deleted tasks will appear here and can be restored.</p>
       </div>
     </div>
   </div>
